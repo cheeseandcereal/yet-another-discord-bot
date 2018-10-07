@@ -4,7 +4,7 @@ import math
 from lib.utils import get_params
 
 
-async def handle_danr(client, message):
+async def handle_danr(client, message, trigger_type, trigger):
     """
     Handle the booru danr request
     :param client: Discord client object
@@ -14,7 +14,7 @@ async def handle_danr(client, message):
     await process_request(client, message.channel, 1, get_params(message))
 
 
-async def handle_spam(client, message):
+async def handle_spam(client, message, trigger_type, trigger):
     """
     Handle the booru spam request
     :param client: Discord client object
