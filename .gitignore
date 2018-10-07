@@ -1,0 +1,10 @@
+# Editor Configs
+.vscode
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Don't commit your token
+config/token
