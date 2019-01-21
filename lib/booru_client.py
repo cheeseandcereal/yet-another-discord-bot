@@ -25,7 +25,7 @@ async def handle_spam(client, message, trigger_type, trigger):
     try:
         amount = int(params[0])
         if amount < 1:
-            await client.send_message(message.channel, ':warning:Warning: Retard alert:triumph:')
+            await client.send_message(message.channel, ':thinking:')
             return
     except Exception:
         await client.send_message(message.channel, 'Usage: `spam <amount> <optional space seperated tags>`')

@@ -5,7 +5,7 @@ import random
 import discord
 import lib.token_handler
 from lib.config import get_config
-from lib.event_handler import handle_message, handle_reaction_add
+from lib.event_handler import EventHandler
 from lib.misc_functions import add_random_reaction
 
 # Check if valid python version
@@ -57,9 +57,11 @@ else:
 
 if token:
     client = discord.Client()
+    handler = EventHandler()
 
     @client.event
     async def on_ready():
+        handler.initialize(client)
         await client.change_presence(game=discord.Game(name='Bepis'))
         print('Logged in as {}'.format(client.user.name))
         print('Invite Link: https://discordapp.com/oauth2/authorize?client_id={}&scope=bot&permissions=2048'.format(client.user.id))
@@ -70,11 +72,11 @@ if token:
         if random_reactions:
             if random.random() > reaction_frequency:
                 await add_random_reaction(client, message)
-        await handle_message(client, message)
+        await handler.handle_message(message)
 
     @client.event
     async def on_reaction_add(reaction, user):
-        await handle_reaction_add(reaction, user)
+        await handler.handle_reaction_add(reaction, user)
 
     print('Logging in and starting up...')
     try:
