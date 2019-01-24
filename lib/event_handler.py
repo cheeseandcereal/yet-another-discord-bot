@@ -16,13 +16,14 @@ class EventHandler:
         # Make sure each of the entries in these arrays have an entry in the function_map dictionary for their relevant functions
         self.msg_author_triggers = []
         self.msg_contains_triggers = ['linux']
-        self.msg_first_word_triggers = ['danr', 'spam']
+        self.msg_first_word_triggers = ['danr', 'spam', 'choose']
 
         # Functions which handle messages taking in the params (client, message)
         self.function_map = {
             'danr': handle_danr,
             'spam': handle_spam,
-            'linux': lib.misc_functions.linux_saying
+            'linux': lib.misc_functions.linux_saying,
+            'choose': lib.misc_functions.handle_choose
         }
 
         try:
