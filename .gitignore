@@ -8,3 +8,8 @@ __pycache__/
 
 # Don't commit your token
 config/token
+
+# Misc
+.stignore
+testing.py
+reminders.bin

@@ -1,6 +1,7 @@
 from lib.config import get_config
 from lib.booru_client import handle_danr, handle_spam
 from lib.cleverbot_client import Cleverbot
+from lib.remind_client import Reminder
 import lib.misc_functions
 
 
@@ -34,6 +35,14 @@ class EventHandler:
                 self.function_map[self_mention] = self.clever.handle_cleverbot
         except Exception:
             print('WARNING: Error processing cleverbot integration')
+
+        try:
+            if get_config('remind_enabled') == 'true':
+                self.remind = Reminder(self.client)
+                self.msg_first_word_triggers.append('remind')
+                self.function_map['remind'] = self.remind.handle_remind
+        except Exception:
+            print('WARNING: Error processing reminder integration')
 
         self.add_triggers('author_triggers', self.msg_author_triggers)
         self.add_triggers('contains_triggers', self.msg_contains_triggers)

@@ -13,7 +13,7 @@ class Cleverbot:
 
     async def handle_cleverbot(self, client, message, trigger_type, trigger):
         """
-        Handle the booru danr request
+        Handle the cleverbot request
         :param client: Discord client object
         :param message: Discord message object related to this request
         :returns: Nothing
@@ -22,7 +22,7 @@ class Cleverbot:
 
     async def process_request(self, message):
         """
-        Process a request to the booru client
+        Process a request to the cleverbot api
         :param message: Message of this request
         :returns: Nothing
         """
