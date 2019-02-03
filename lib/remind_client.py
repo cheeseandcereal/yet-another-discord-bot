@@ -83,25 +83,31 @@ class Reminder:
         if to_remind.lower() == 'me':
             remind_user = message.author
         # For a mention, get the user object
-        elif to_remind in list(map(lambda x: x.mention, message.mentions)):
-            for mention in message.mentions:
-                if mention.mention == to_remind:
-                    remind_user = mention
-        # Else not valid
         else:
-            await self.client.send_message(message.channel, usage)
-            return
+            # Extract just the user id
+            to_remind = to_remind.replace('<@', '')
+            to_remind = to_remind.replace('!', '')
+            to_remind = to_remind.replace('>', '')
+            for user in message.mentions:
+                if user.id == to_remind:
+                    remind_user = user
+            if remind_user is None:  # User was never set; invalid request
+                msg = 'Invalid <user>\n' + usage
+                await self.client.send_message(message.channel, msg)
+                return
         # Parse out number integer
         try:
             remind_offset = int(params[1])
         except Exception:
-            await self.client.send_message(message.channel, usage)
+            msg = 'Invalid <number>\n' + usage
+            await self.client.send_message(message.channel, msg)
             return
         # Parse out time unit
         try:
             remind_multiplier = offset_map[params[2].lower()]
         except Exception:
-            await self.client.send_message(message.channel, usage)
+            msg = 'Invalid <time_unit>\n' + usage
+            await self.client.send_message(message.channel, msg)
             return
         remind_time = time.time() + (remind_offset * remind_multiplier)
         # Get the raw message after params
