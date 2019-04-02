@@ -5,6 +5,7 @@ import pickle
 import asyncio
 import heapq
 from lib.utils import get_params
+from lib.config import get_config
 
 usage = """```Usage: remind <user> <number> <time_unit> <message>
 
@@ -26,6 +27,8 @@ offset_map = {
     'weeks': 604800
 }
 
+lock = threading.Lock()
+
 
 class RemindEvent:
     def __init__(self, user, time, message):
@@ -42,8 +45,9 @@ class Reminder:
     def __init__(self, client):
         self.client = client
         self.event_loop = asyncio.get_event_loop()
+        self.save_time = int(get_config('remind_save_time'))
         self.file = os.path.join(os.getcwd(), 'reminders.bin')
-        if(not os.path.exists(self.file)):
+        if not os.path.exists(self.file):
             open(self.file, 'a').close()
         self.init_from_file()
         self.runner = threading.Thread(target=self.thread_loop)
@@ -84,54 +88,52 @@ class Reminder:
             remind_user = message.author
         # For a mention, get the user object
         else:
-            # Extract just the user id
-            to_remind = to_remind.replace('<@', '')
-            to_remind = to_remind.replace('!', '')
-            to_remind = to_remind.replace('>', '')
+            # Extract just the user id from the mentions
+            to_remind = to_remind.replace('<@', '').replace('!', '').replace('>', '')
             for user in message.mentions:
                 if user.id == to_remind:
                     remind_user = user
             if remind_user is None:  # User was never set; invalid request
                 msg = 'Invalid <user>\n' + usage
-                await self.client.send_message(message.channel, msg)
-                return
+                return await self.client.send_message(message.channel, msg)
         # Parse out number integer
         try:
             remind_offset = int(params[1])
         except Exception:
             msg = 'Invalid <number>\n' + usage
-            await self.client.send_message(message.channel, msg)
-            return
+            return await self.client.send_message(message.channel, msg)
         # Parse out time unit
         try:
             remind_multiplier = offset_map[params[2].lower()]
         except Exception:
             msg = 'Invalid <time_unit>\n' + usage
-            await self.client.send_message(message.channel, msg)
-            return
+            return await self.client.send_message(message.channel, msg)
         remind_time = time.time() + (remind_offset * remind_multiplier)
         # Get the raw message after params
         raw_message = message.content[message.content.find(params[2]) + len(params[2]):]
-        heapq.heappush(self.jobs, RemindEvent(remind_user, remind_time, raw_message))
+        with lock:
+            heapq.heappush(self.jobs, RemindEvent(remind_user, remind_time, raw_message))
         await self.client.send_message(message.channel, 'ok')
 
     def thread_loop(self):
         """
         The loop for the thread that handles sending reminders
         """
-        count = 1
-        while(True):
+        count = 0
+        while True:
             try:
                 time.sleep(2)
-                while(self.jobs and self.jobs[0].time < time.time()):
-                    current = heapq.heappop(self.jobs)
+                count += 2
+                while self.jobs and self.jobs[0].time < time.time():
+                    with lock:
+                        current = heapq.heappop(self.jobs)
                     print('Sending reminder to {}'.format(current.user.display_name))
+                    # Fire off reminder message when time in the main thread
                     asyncio.run_coroutine_threadsafe(self.client.send_message(current.user, current.message), self.event_loop)
                 # Occasionally backup to disk
-                if count % 7 == 0:
-                    f = open(self.file, 'wb')
-                    pickle.dump(self.jobs, f)
-                    f.close()
-                count += 1
+                if count >= self.save_time:
+                    with open(self.file, 'wb') as f:
+                        pickle.dump(self.jobs, f)
+                    count = 0
             except Exception as e:
                 print('Exception in Reminder thread loop {}'.format(e))
