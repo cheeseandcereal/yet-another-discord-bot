@@ -9,8 +9,8 @@ from lib.event_handler import EventHandler
 from lib.misc_functions import add_random_reaction
 
 # Check if valid python version
-if not (sys.version_info.major == 3 and sys.version_info.minor >= 5 and sys.version_info.minor <= 6):
-    print('Sorry, only works with python 3.5 or 3.6 right now')
+if not (sys.version_info.major == 3 and sys.version_info.minor >= 5 and sys.version_info.minor <= 7):
+    print('Sorry, only works with python 3.5-3.7 right now')
     sys.exit(1)
 
 # Load config/settings
