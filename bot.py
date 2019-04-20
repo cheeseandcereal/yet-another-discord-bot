@@ -8,21 +8,11 @@ from lib.config import get_config
 from lib.event_handler import EventHandler
 from lib.misc_functions import add_random_reaction
 
-# Check if valid python version
-if not (sys.version_info.major == 3 and sys.version_info.minor >= 5 and sys.version_info.minor <= 7):
-    print('Sorry, only works with python 3.5-3.7 right now')
-    sys.exit(1)
-
-# Load config/settings
-try:
-    random_reactions = get_config('random_reactions') == 'true'
-    reaction_frequency = 1 - float(get_config('reaction_frequency'))
-except Exception:
-    print('Error parsing config file. Please ensure config/config.ini exists and is proper format')
-    sys.exit(1)
-
 
 def print_usage():
+    """
+    Print bot usage
+    """
     message = """
     Usage: python3 bot.py [option] [arg]
         When ran without any arguments, the bot will attempt to start,
@@ -35,27 +25,44 @@ def print_usage():
     print(message)
 
 
-token = None
-if len(sys.argv) > 1:
+if __name__ == '__main__':
+    # Check if valid python version
+    if not (sys.version_info.major == 3 and sys.version_info.minor >= 5 and sys.version_info.minor <= 7):
+        print('Sorry, this bot only works with python 3.5-3.7 right now')
+        sys.exit(1)
+
+    # Load config/settings
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'ht:s:', ['help', 'token=', 'save-token='])
-    except getopt.GetoptError:
+        random_reactions = get_config('random_reactions') == 'true'
+        reaction_frequency = 1 - float(get_config('reaction_frequency'))
+    except Exception:
+        print('Error parsing config file. Please ensure config/config.ini exists and is proper format')
+        sys.exit(1)
+
+    token = None
+    if len(sys.argv) > 1:
+        try:
+            opts, args = getopt.getopt(sys.argv[1:], 'ht:s:', ['help', 'token=', 'save-token='])
+        except getopt.GetoptError:
+            print_usage()
+            sys.exit(1)
+        for opt, arg in opts:
+            if opt in ('-h', '--help'):
+                print_usage()
+                sys.exit(0)
+            elif opt in ('-t', '--token'):
+                token = arg
+            elif opt in ('-s', '--save-token'):
+                lib.token_handler.save_token(arg)
+                print('Token saved\nRun again with no arguments to use with these saved credentials')
+                sys.exit(0)
+    else:
+        token = lib.token_handler.read_token()
+
+    if not token:
         print_usage()
         sys.exit(1)
-    for opt, arg in opts:
-        if opt in ('-h', '--help'):
-            print_usage()
-            sys.exit(0)
-        elif opt in ('-t', '--token'):
-            token = arg
-        elif opt in ('-s', '--save-token'):
-            lib.token_handler.save_token(arg)
-            print('Token saved\nRun again with no arguments to use with these saved credentials')
-            sys.exit(0)
-else:
-    token = lib.token_handler.read_token()
 
-if token:
     client = discord.Client()
     handler = EventHandler()
 
@@ -83,7 +90,4 @@ if token:
         client.run(token)
     except Exception as e:
         print(e)
-        exit(1)
-else:
-    print_usage()
-    exit(1)
+        sys.exit(1)

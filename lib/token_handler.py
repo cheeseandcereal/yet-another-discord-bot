@@ -1,11 +1,12 @@
 import discord
 
 
-def save_token(token):
+def save_token(token: str):
     """
     Saves a token string to the config file
-    :param token: token string to save
-    :returns: Nothing
+
+    Args:
+        token: token string to save
     """
     with open('config/token', 'w') as file:
         file.write('{}\n'.format(token))
@@ -14,8 +15,9 @@ def save_token(token):
 def read_token():
     """
     Reads token from the saved config file
-    Returns None if invalid/missing token
-    :returns: token string from file or None if missing/invalid
+
+    Returns:
+        token string from file (or None if missing/invalid)
     """
     try:
         with open('config/token', 'r') as file:
@@ -25,11 +27,12 @@ def read_token():
         return None
 
 
-async def validate_token(token):
+async def validate_token(token: str):
     """
-    Takes in a token and raises an exception if invalid
-    :param token: discord authentication token for loggin in
-    :returns: Nothing
+    Checks a discord token by raising an exception if invalid
+
+    Args:
+        token: discord authentication token for loggin in
     """
     client = discord.Client()
     await client.login(token)

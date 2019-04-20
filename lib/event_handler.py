@@ -5,13 +5,14 @@ from lib.remind_client import Reminder
 import lib.misc_functions
 
 
-class EventHandler:
+class EventHandler(object):
     def initialize(self, client):
         """
         Initialize this EventHandler with a fully ready client.
         This is needed because the discord client must be fully initialized before calling.
-        :param client: Ready Discord client object
-        :returns: Nothing
+
+        Args:
+            client: Ready Discord client object
         """
         self.client = client
         # Make sure each of the entries in these arrays have an entry in the function_map dictionary for their relevant functions
@@ -48,7 +49,14 @@ class EventHandler:
         self.add_triggers('contains_triggers', self.msg_contains_triggers)
         self.add_triggers('first_word_triggers', self.msg_first_word_triggers)
 
-    def add_triggers(self, config_entry, trigger_array):
+    def add_triggers(self, config_entry: str, trigger_array: list):
+        """
+        Read bot triggers from a settings configuration entry and make them active for the bot
+
+        Args:
+            config_entry: settings config key of the entries to read
+            trigger_array: list to add the parsed triggers into
+        """
         for item in get_config(config_entry).split(','):
             try:
                 response_type = get_config(section=item, key='type')
@@ -63,9 +71,9 @@ class EventHandler:
     async def handle_message(self, message):
         """
         Handle a discord message event
-        :param client: Discord client object
-        :param message: Discord message object for this event
-        :returns: Nothing
+
+        Args:
+            message: Discord message object for this event
         """
         # Don't let the bot trigger itself
         if message.author != self.client.user:
@@ -91,8 +99,9 @@ class EventHandler:
     async def handle_reaction_add(self, reaction, user):
         """
         Handle a reaction add event
-        :param reaction: Discord reaction object
-        :param user: Discord user object
-        :returns: Nothing
+
+        Args:
+            reaction: Discord reaction object
+            user: Discord user object
         """
         pass

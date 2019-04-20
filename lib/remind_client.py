@@ -30,8 +30,17 @@ offset_map = {
 lock = threading.Lock()
 
 
-class RemindEvent:
-    def __init__(self, user, time, message):
+class RemindEvent(object):
+    """ Data related to a reminder event """
+    def __init__(self, user, time: float, message: str):
+        """
+        Constructor for the reminder event
+
+        Args:
+            user: Discord user object for this reminder
+            time: unix timestamp to remind this user
+            message: reminder message to send for this event
+        """
         self.user = user
         self.time = time
         self.message = message
@@ -41,12 +50,20 @@ class RemindEvent:
         return self.time < other.time
 
 
-class Reminder:
+class Reminder(object):
+    """ Reminder client for the bot """
     def __init__(self, client):
+        """
+        Constructor for the reminder client
+
+        Args:
+            client: Discord client object to use in order to send reminder messages
+        """
         self.client = client
         self.event_loop = asyncio.get_event_loop()
         self.save_time = int(get_config('remind_save_time'))
         self.file = os.path.join(os.getcwd(), 'reminders.bin')
+        # Create the reminders file if it doesn't exist
         if not os.path.exists(self.file):
             open(self.file, 'a').close()
         self.init_from_file()
@@ -56,7 +73,6 @@ class Reminder:
     def init_from_file(self):
         """
         Read jobs from a file on initialization
-        :returns: Nothing
         """
         f = open(self.file, 'rb')
         try:
@@ -64,20 +80,24 @@ class Reminder:
         except EOFError:
             self.jobs = []
 
-    async def handle_remind(self, client, message, trigger_type, trigger):
+    async def handle_remind(self, client, message, trigger_type: str, trigger: str):
         """
         Handle the remind request
-        :param client: Discord client object
-        :param message: Discord message object related to this request
-        :returns: Nothing
+
+        Args:
+            client: Discord client object
+            message: Discord message object related to this request
+            trigger_type: the trigger type that called this function ('author', 'first_word', or 'contains')
+            trigger: the relevant string from the message that triggered this call
         """
         await self.process_request(message)
 
     async def process_request(self, message):
         """
         Process a request for a reminder
-        :param message: Message of this request
-        :returns: Nothing
+
+        Args:
+            message: Discord message object related to this request
         """
         params = get_params(message)
         to_remind = params[0]

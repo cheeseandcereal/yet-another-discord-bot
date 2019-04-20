@@ -4,12 +4,15 @@ import math
 from lib.utils import get_params
 
 
-async def handle_danr(client, message, trigger_type, trigger):
+async def handle_danr(client, message, trigger_type: str, trigger: str):
     """
     Handle the booru danr request
-    :param client: Discord client object
-    :param message: Discord message object related to this request
-    :returns: Nothing
+
+    Args:
+        client: Discord client object
+        message: Discord message object related to this request
+        trigger_type: the trigger type that called this function ('author', 'first_word', or 'contains')
+        trigger: the relevant string from the message that triggered this call
     """
     await process_request(client, message.channel, 1, get_params(message))
 
@@ -17,9 +20,12 @@ async def handle_danr(client, message, trigger_type, trigger):
 async def handle_spam(client, message, trigger_type, trigger):
     """
     Handle the booru spam request
-    :param client: Discord client object
-    :param message: Discord message object related to this request
-    :returns: Nothing
+
+    Args:
+        client: Discord client object
+        message: Discord message object related to this request
+        trigger_type: the trigger type that called this function ('author', 'first_word', or 'contains')
+        trigger: the relevant string from the message that triggered this call
     """
     params = get_params(message)
     try:
@@ -34,14 +40,15 @@ async def handle_spam(client, message, trigger_type, trigger):
     await process_request(client, message.channel, amount, params)
 
 
-async def process_request(client, channel, amount, params):
+async def process_request(client, channel, amount: int, params: list):
     """
     Process a request to the booru client
-    :param client: Discord client object
-    :param channel: Channel to send the messages to
-    :param amount: Integer amount of images to request
-    :param params: Array of tags (Note: danbooru has max limit of up to 2)
-    :returns: Nothing
+
+    Args:
+        client: Discord client object
+        channel: Channel to send the messages to
+        amount: Integer amount of images to request
+        params: List of tags (Note: danbooru has max limit of up to 2)
     """
     warning = ''
     if amount > 200:
@@ -78,12 +85,15 @@ async def process_request(client, channel, amount, params):
             await client.delete_message(done)
 
 
-def get_danbooru(amount, tags):
+def get_danbooru(amount: int, tags: list):
     """
     Makes an http call to the danbooru api, returning an array of image URLs
-    :param amount: Integer amount of images to request
-    :param tags: Array of tags (Note: danbooru has max limit of up to 2)
-    :returns: Array of image URLs matching search with length <= amount. Empty if no results
+
+    Args:
+        amount: Integer amount of images to request
+        tags: list of tags (Note: danbooru has max limit of up to 2)
+    Returns:
+        List of image URLs matching search with length <= amount. Empty if no results
     """
     offset = max([3, math.ceil(amount * 0.25)])
     # Request more than we need because sometimes danbooru will return bad results amidst good ones

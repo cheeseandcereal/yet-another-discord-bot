@@ -3,28 +3,40 @@ import random
 import requests
 
 
-class Cleverbot:
-    def __init__(self, apikey, client):
+class Cleverbot(object):
+    """ Client for handling cleverbot.com interactions """
+    def __init__(self, apikey: str, client):
+        """
+        Constructor for the cleverbot client
+
+        Args:
+            apikey: the apikey to use for cleverbot.com
+            client: Discord client object to use with this cleverbot
+        """
         self.client = client
         self.base_url = 'https://www.cleverbot.com/getreply'
         self.apikey = apikey
         self.conversations = {}
         self.timeout = 30
 
-    async def handle_cleverbot(self, client, message, trigger_type, trigger):
+    async def handle_cleverbot(self, client, message, trigger_type: str, trigger: str):
         """
         Handle the cleverbot request
-        :param client: Discord client object
-        :param message: Discord message object related to this request
-        :returns: Nothing
+
+        Args:
+            client: Discord client object
+            message: Discord message object related to this request
+            trigger_type: the trigger type that called this function ('author', 'first_word', or 'contains')
+            trigger: the relevant string from the message that triggered this call
         """
         await self.process_request(message)
 
     async def process_request(self, message):
         """
         Process a request to the cleverbot api
-        :param message: Message of this request
-        :returns: Nothing
+
+        Args:
+            message: Discord message object related of this request
         """
         await self.client.send_typing(message.channel)  # Send typing to indicate we're fetching a response
         params = {
