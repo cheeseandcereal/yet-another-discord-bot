@@ -69,16 +69,16 @@ if __name__ == '__main__':
     @client.event
     async def on_ready():
         handler.initialize(client)
-        await client.change_presence(game=discord.Game(name='Bepis'))
+        await client.change_presence(activity=discord.Game('Bepis'))
         print('Logged in as {}'.format(client.user.name))
         print('Invite Link: https://discordapp.com/oauth2/authorize?client_id={}&scope=bot&permissions=2048'.format(client.user.id))
         print('------')
 
     @client.event
     async def on_message(message):
-        if random_reactions:
+        if random_reactions and message.author != client.user:
             if random.random() > reaction_frequency:
-                await add_random_reaction(client, message)
+                await add_random_reaction(message)
         await handler.handle_message(message)
 
     @client.event

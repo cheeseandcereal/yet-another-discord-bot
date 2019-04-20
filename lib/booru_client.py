@@ -1,28 +1,26 @@
 import requests
-import time
 import math
 from lib.utils import get_params
 
 
-async def handle_danr(client, message, trigger_type: str, trigger: str):
+async def handle_danr(message, trigger_type: str, trigger: str):
     """
     Handle the booru danr request
 
     Args:
-        client: Discord client object
         message: Discord message object related to this request
         trigger_type: the trigger type that called this function ('author', 'first_word', or 'contains')
         trigger: the relevant string from the message that triggered this call
     """
-    await process_request(client, message.channel, 1, get_params(message))
+    await message.channel.trigger_typing()
+    await process_request(message.channel, 1, get_params(message))
 
 
-async def handle_spam(client, message, trigger_type, trigger):
+async def handle_spam(message, trigger_type, trigger):
     """
     Handle the booru spam request
 
     Args:
-        client: Discord client object
         message: Discord message object related to this request
         trigger_type: the trigger type that called this function ('author', 'first_word', or 'contains')
         trigger: the relevant string from the message that triggered this call
@@ -31,22 +29,22 @@ async def handle_spam(client, message, trigger_type, trigger):
     try:
         amount = int(params[0])
         if amount < 1:
-            await client.send_message(message.channel, ':thinking:')
+            await message.channel.send(':thinking:')
             return
     except Exception:
-        await client.send_message(message.channel, 'Usage: `spam <amount> <optional space seperated tags>`')
+        await message.channel.send('Usage: `spam <amount> <optional space seperated tags>`')
         return
     params = params[1:]
-    await process_request(client, message.channel, amount, params)
+    await message.channel.trigger_typing()
+    await process_request(message.channel, amount, params)
 
 
-async def process_request(client, channel, amount: int, params: list):
+async def process_request(channel, amount: int, params: list):
     """
     Process a request to the booru client
 
     Args:
-        client: Discord client object
-        channel: Channel to send the messages to
+        channel: Discord channel model
         amount: Integer amount of images to request
         params: List of tags (Note: danbooru has max limit of up to 2)
     """
@@ -57,32 +55,29 @@ async def process_request(client, channel, amount: int, params: list):
         warning = ':warning:Note: Danbooru doesn\'t allow searching on more than 2 tags at once. Search will be limited to your first 2 tag'
         params = params[:2]
     if warning:
-        await client.send_message(channel, warning)
-    msg = await client.send_message(channel, 'Fetching Images...')
+        await channel.send(warning)
     print('[BOORU_CLIENT] Request for {} images with tags: {}'.format(amount, params))
     try:
         result = get_danbooru(amount, params)
     except Exception:
         print('[BOORU_CLIENT] Request threw an exception')
-        await client.edit_message(msg, 'Error while getting content. Maybe the booru api is down or malfunctioning?')
+        await channel.send('Error while getting content. Maybe the booru api is down or malfunctioning?')
+        return
     if not result:
         print('[BOORU_CLIENT] Request had no (or bad) results')
-        await client.edit_message(msg, 'No result found. Find better tags: https://www.donmai.us/tags')
+        await channel.send('No result found. Find better tags: https://www.donmai.us/tags')
+        return
     else:
         length = len(result)
         print('[BOORU_CLIENT] Sending back results: {}'.format(result))
         print('[BOORU_CLIENT] {} proper image url responses.'.format(length))
         if length > 1:
-            await client.edit_message(msg, 'Retrieved {} results. Sending now'.format(length))
-        else:
-            await client.delete_message(msg)
+            msg = await channel.send('Retrieved {} results. Sending now'.format(length))
         for x in range(math.ceil(length / 5)):
-            await client.send_message(channel, '\n'.join(result[x * 5:(x * 5) + 5]))
+            await channel.send('\n'.join(result[x * 5:(x * 5) + 5]))
         if length > 1:
-            done = await client.send_message(channel, 'Done')
-            await client.delete_message(msg)
-            time.sleep(1)
-            await client.delete_message(done)
+            await channel.send('Done', delete_after=1.5)
+            await msg.delete()
 
 
 def get_danbooru(amount: int, tags: list):

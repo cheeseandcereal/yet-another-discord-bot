@@ -1,5 +1,6 @@
 from lib.config import get_config
 from lib.booru_client import handle_danr, handle_spam
+from lib.waifu_client import handle_waifu
 from lib.cleverbot_client import Cleverbot
 from lib.remind_client import Reminder
 import lib.misc_functions
@@ -8,30 +9,37 @@ import lib.misc_functions
 class EventHandler(object):
     def initialize(self, client):
         """
-        Initialize this EventHandler with a fully ready client.
-        This is needed because the discord client must be fully initialized before calling.
+        Initialize this EventHandler
 
         Args:
             client: Ready Discord client object
+        Raises:
+            RuntimeError when passed discord client is not ready
         """
+        if not client.is_ready():
+            raise RuntimeError('Discord client passed into EventHandler was not ready for use')
         self.client = client
         # Make sure each of the entries in these arrays have an entry in the function_map dictionary for their relevant functions
         self.msg_author_triggers = []
         self.msg_contains_triggers = ['linux']
-        self.msg_first_word_triggers = ['danr', 'spam', 'choose']
+        self.msg_first_word_triggers = ['danr', 'spam', 'choose', 'waifu', 'imouto', 'oneechan', 'oneesan']
 
         # Functions which handle messages taking in the params (client, message)
         self.function_map = {
             'danr': handle_danr,
             'spam': handle_spam,
             'linux': lib.misc_functions.linux_saying,
-            'choose': lib.misc_functions.handle_choose
+            'choose': lib.misc_functions.handle_choose,
+            'waifu': handle_waifu,
+            'imouto': handle_waifu,
+            'oneechan': handle_waifu,
+            'oneesan': handle_waifu
         }
 
         try:
             if get_config('cleverbot_integration') == 'true':
-                self.clever = Cleverbot(get_config('cleverbot_api_key'), self.client)
-                self_mention = '<@{}>'.format(client.user.id)
+                self.clever = Cleverbot(get_config('cleverbot_api_key'))
+                self_mention = '<@{}>'.format(self.client.user.id)
                 self.msg_first_word_triggers.append(self_mention)
                 self.function_map[self_mention] = self.clever.handle_cleverbot
         except Exception:
@@ -81,18 +89,18 @@ class EventHandler(object):
             first_word = message.content.split()[0].lower()
             if author in self.msg_author_triggers:
                 try:
-                    await self.function_map[author](self.client, message, 'author', author)
+                    await self.function_map[author](message, 'author', author)
                 except Exception as e:
                     print('WARNING: Exception thrown during author function call', e)
             if first_word in self.msg_first_word_triggers:
                 try:
-                    await self.function_map[first_word](self.client, message, 'first_word', first_word)
+                    await self.function_map[first_word](message, 'first_word', first_word)
                 except Exception as e:
                     print('WARNING: Exception thrown during first_word function call', e)
             for phrase in self.msg_contains_triggers:
                 if phrase in message.content.lower():
                     try:
-                        await self.function_map[phrase](self.client, message, 'contains', phrase)
+                        await self.function_map[phrase](message, 'contains', phrase)
                     except Exception as e:
                         print('WARNING: Exception thrown during contains function call', e)
 

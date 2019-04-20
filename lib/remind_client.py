@@ -32,16 +32,16 @@ lock = threading.Lock()
 
 class RemindEvent(object):
     """ Data related to a reminder event """
-    def __init__(self, user, time: float, message: str):
+    def __init__(self, user_id: int, time: float, message: str):
         """
         Constructor for the reminder event
 
         Args:
-            user: Discord user object for this reminder
+            user_id: discord user_id for this reminder
             time: unix timestamp to remind this user
             message: reminder message to send for this event
         """
-        self.user = user
+        self.user_id = user_id
         self.time = time
         self.message = message
 
@@ -57,8 +57,12 @@ class Reminder(object):
         Constructor for the reminder client
 
         Args:
-            client: Discord client object to use in order to send reminder messages
+            client: Ready Discord client object
+        Raises:
+            RuntimeError when passed discord client is not ready
         """
+        if not client.is_ready():
+            raise RuntimeError('Discord client passed into Reminder client was not ready for use')
         self.client = client
         self.event_loop = asyncio.get_event_loop()
         self.save_time = int(get_config('remind_save_time'))
@@ -80,12 +84,11 @@ class Reminder(object):
         except EOFError:
             self.jobs = []
 
-    async def handle_remind(self, client, message, trigger_type: str, trigger: str):
+    async def handle_remind(self, message, trigger_type: str, trigger: str):
         """
         Handle the remind request
 
         Args:
-            client: Discord client object
             message: Discord message object related to this request
             trigger_type: the trigger type that called this function ('author', 'first_word', or 'contains')
             trigger: the relevant string from the message that triggered this call
@@ -109,31 +112,32 @@ class Reminder(object):
         # For a mention, get the user object
         else:
             # Extract just the user id from the mentions
-            to_remind = to_remind.replace('<@', '').replace('!', '').replace('>', '')
+            to_remind = int(to_remind.replace('<@', '').replace('!', '').replace('>', ''))
             for user in message.mentions:
                 if user.id == to_remind:
                     remind_user = user
             if remind_user is None:  # User was never set; invalid request
                 msg = 'Invalid <user>\n' + usage
-                return await self.client.send_message(message.channel, msg)
+                return await message.channel.send(msg)
         # Parse out number integer
         try:
             remind_offset = int(params[1])
         except Exception:
             msg = 'Invalid <number>\n' + usage
-            return await self.client.send_message(message.channel, msg)
+            return await message.channel.send(msg)
         # Parse out time unit
         try:
             remind_multiplier = offset_map[params[2].lower()]
         except Exception:
             msg = 'Invalid <time_unit>\n' + usage
-            return await self.client.send_message(message.channel, msg)
+            await message.channel.send(msg)
+            return
         remind_time = time.time() + (remind_offset * remind_multiplier)
         # Get the raw message after params
         raw_message = message.content[message.content.find(params[2]) + len(params[2]):]
         with lock:
-            heapq.heappush(self.jobs, RemindEvent(remind_user, remind_time, raw_message))
-        await self.client.send_message(message.channel, 'ok')
+            heapq.heappush(self.jobs, RemindEvent(remind_user.id, remind_time, raw_message))
+        await message.channel.send('ok')
 
     def thread_loop(self):
         """
@@ -142,14 +146,18 @@ class Reminder(object):
         count = 0
         while True:
             try:
-                time.sleep(2)
-                count += 2
+                time.sleep(1)
+                count += 1
                 while self.jobs and self.jobs[0].time < time.time():
                     with lock:
                         current = heapq.heappop(self.jobs)
-                    print('Sending reminder to {}'.format(current.user.display_name))
+                    user = self.client.get_user(current.user_id)
+                    if user is None:
+                        print('[REMINDER] WARNING: Couldn\'t locate user with id {} for reminder. Ignoring this reminder (message was {})'.format(current.message))
+                        continue
+                    print('Sending reminder to {}'.format(user.display_name))
                     # Fire off reminder message when time in the main thread
-                    asyncio.run_coroutine_threadsafe(self.client.send_message(current.user, current.message), self.event_loop)
+                    asyncio.run_coroutine_threadsafe(user.send(current.message), self.event_loop)
                 # Occasionally backup to disk
                 if count >= self.save_time:
                     with open(self.file, 'wb') as f:
