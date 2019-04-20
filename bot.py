@@ -27,8 +27,8 @@ def print_usage():
 
 if __name__ == '__main__':
     # Check if valid python version
-    if not (sys.version_info.major == 3 and sys.version_info.minor >= 5 and sys.version_info.minor <= 7):
-        print('Sorry, this bot only works with python 3.5-3.7 right now')
+    if not (sys.version_info.major == 3 and sys.version_info.minor >= 5):
+        print('Sorry, this bot only works with python 3.5+')
         sys.exit(1)
 
     # Load config/settings
