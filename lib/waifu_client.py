@@ -45,11 +45,11 @@ async def process_request(channel, trigger: str):
             return
         print(r.text)
         res = r.json()
-        await channel.send('Your {} is {} from {}\n{}'.format(trigger, res['name'], res['series']['name'], res['display_picture']))
+        await channel.send('Your {} is {} from {}\n{}'.format(trigger, res['data']['name'], res['data']['series']['name'], res['data']['display_picture']))
         # Make sure to truncate the descripiton if it is too long for discord
-        if len(res['description']) >= 1950:
-            res['description'] = res['description'][:1950] + '...'
-        await channel.send(res['description'])
+        if len(res['data']['description']) >= 1950:
+            res['data']['description'] = res['data']['description'][:1950] + '...'
+        await channel.send(res['data']['description'])
     except Exception as e:
         print(e)
         await channel.send(error_message)
