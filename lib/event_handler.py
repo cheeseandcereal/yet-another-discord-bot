@@ -39,7 +39,7 @@ class EventHandler(object):
         try:
             if get_config('cleverbot_integration') == 'true':
                 self.clever = Cleverbot(get_config('cleverbot_api_key'))
-                self_mention = '<@{}>'.format(self.client.user.id)
+                self_mention = '<@!{}>'.format(self.client.user.id)
                 self.msg_first_word_triggers.append(self_mention)
                 self.function_map[self_mention] = self.clever.handle_cleverbot
         except Exception:
