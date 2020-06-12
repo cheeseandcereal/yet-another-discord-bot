@@ -21,8 +21,10 @@ class EventHandler(object):
         self.client = client
         # Make sure each of the entries in these arrays have an entry in the function_map dictionary for their relevant functions
         self.msg_author_triggers = []
-        self.msg_contains_triggers = ['linux']
+        self.msg_contains_triggers = []
         self.msg_first_word_triggers = ['danr', 'spam', 'choose', 'waifu', 'imouto', 'oneechan', 'oneesan']
+        if get_config('linux_nag') == 'true':
+            self.msg_contains_triggers.append('linux')
 
         # Functions which handle messages taking in the params (client, message)
         self.function_map = {
