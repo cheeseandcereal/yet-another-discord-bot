@@ -1,10 +1,10 @@
 import configparser
 
 config = configparser.ConfigParser()
-config.readfp(open('config/config.ini'))
+config.readfp(open("config/config.ini"))
 
 
-def get_config(key: str, section: str = 'settings'):
+def get_config(key: str, section: str = "settings") -> str:
     """
     Get the config value for a certain setting
 
