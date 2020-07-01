@@ -22,14 +22,13 @@ def print_usage() -> None:
 
     -h --help       Display this help message
     -t --token      Run with a one-time token from this command line parameter
-    -s --save-token Save a token from this command line parameter into the config file
-    """
+    -s --save-token Save a token from this command line parameter into the config file"""
     print(message)
 
 
 if __name__ == "__main__":
     # Check if valid python version
-    if not (sys.version_info.major == 3 and sys.version_info.minor >= 6
+    if not (sys.version_info.major == 3 and sys.version_info.minor >= 6):
         print("Sorry, this bot only works with python 3.6+")
         sys.exit(1)
 
@@ -68,7 +67,7 @@ if __name__ == "__main__":
     client = discord.Client()
     handler = EventHandler()
 
-    @client.event
+    @client.event  # type: ignore
     async def on_ready() -> None:
         handler.initialize(client)
         await client.change_presence(activity=discord.Game("Bepis"))
@@ -76,14 +75,14 @@ if __name__ == "__main__":
         print("Invite Link: https://discordapp.com/oauth2/authorize?client_id={}&scope=bot&permissions=2048".format(client.user.id))
         print("------")
 
-    @client.event
+    @client.event  # type: ignore
     async def on_message(message: discord.Message) -> None:
         if random_reactions and message.author != client.user:
             if random.random() > reaction_frequency:
                 await add_random_reaction(message)
         await handler.handle_message(message)
 
-    @client.event
+    @client.event  # type: ignore
     async def on_reaction_add(reaction: discord.Reaction, user: discord.User) -> None:
         await handler.handle_reaction_add(reaction, user)
 
