@@ -9,6 +9,7 @@ import heapq
 if TYPE_CHECKING:
     from discord import Message, Client
 
+import discord
 from lib.utils import get_params
 from lib.config import get_config
 
@@ -158,13 +159,11 @@ class Reminder(object):
                 while self.jobs and self.jobs[0].time < time.time():
                     with lock:
                         current = heapq.heappop(self.jobs)
-                    user = self.client.get_user(current.user_id)
-                    if user is None:
-                        print(
-                            "[REMINDER] WARNING: Couldn't locate user with id {} for reminder. Ignoring this reminder (message was {})".format(
-                                current.user_id, current.message
-                            )
-                        )
+                    user = None
+                    try:
+                        user = asyncio.run_coroutine_threadsafe(self.client.fetch_user(current.user_id), self.event_loop).result()
+                    except discord.NotFound:
+                        print('[REMINDER] WARNING: Couldn\'t locate user with id {} for reminder. Ignoring this reminder (message was:{})'.format(current.user_id, current.message))
                         continue
                     print("Sending reminder to {}".format(user.display_name))
                     # Fire off reminder message when time in the main thread
@@ -175,4 +174,4 @@ class Reminder(object):
                         pickle.dump(self.jobs, f)
                     count = 0
             except Exception as e:
-                print("Exception in Reminder thread loop {}".format(e))
+                print('Exception in Reminder thread loop: {}'.format(e))
