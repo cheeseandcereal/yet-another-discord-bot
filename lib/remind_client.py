@@ -10,12 +10,12 @@ if TYPE_CHECKING:
     from discord import Message, Client
 
 import discord
-from lib.utils import get_params
+from lib.utils import get_params, friendly_name_of_messageable
 from lib.config import get_config
 
-usage = """```Usage: remind <user> <number> <time_unit> <message>
+usage = """```Usage: remind <user/channel> <number> <time_unit> <message>
 
-user: 'me' or a mentioned user
+user/channel: 'me', a mentioned user [@abc#123], 'here', or a mentioned channel [#chan]
 number: integer of <time_units> before sending the reminder
 time_unit: second, seconds, minute, minutes, hour, hours, day, days, week, weeks
 message: message to send in the reminder```"""
@@ -38,8 +38,7 @@ lock = threading.Lock()
 
 class RemindEvent(object):
     """ Data related to a reminder event """
-
-    def __init__(self, user_id: int, time: float, message: str):
+    def __init__(self, user_id: int, time: float, message: str, channel_id: int = 0):
         """
         Constructor for the reminder event
 
@@ -51,6 +50,8 @@ class RemindEvent(object):
         self.user_id = user_id
         self.time = time
         self.message = message
+        if channel_id:
+            self.channel_id = channel_id
 
     # Needed for heapq since it uses builtin list.sort
     def __lt__(self, other: "RemindEvent") -> bool:
@@ -111,22 +112,28 @@ class Reminder(object):
             message: Discord message object related to this request
         """
         params = get_params(message)
+        if not params:
+            return
         to_remind = params[0]
         # Parse out who to remind
-        remind_user = None
-        # For 'me', set remind user as author
-        if to_remind.lower() == "me":
-            remind_user = message.author
-        # For a mention, get the user object
-        else:
-            # Extract just the user id from the mentions
-            to_remind_id = int(to_remind.replace("<@", "").replace("!", "").replace(">", ""))
-            for user in message.mentions:
-                if user.id == to_remind_id:
-                    remind_user = user
-            if remind_user is None:  # User was never set; invalid request
-                msg = "Invalid <user>\n" + usage
-                return await message.channel.send(msg)
+        remind_user_id = 0
+        remind_channel_id = 0
+        # For 'me', set remind id of the message author
+        if to_remind.lower() == 'me':
+            remind_user_id = message.author.id
+        # For 'here', set remind id as channel of the message
+        elif to_remind.lower() == 'here':
+            remind_channel_id = message.channel.id
+        # For a mention, get the user/channel id
+        elif '<@' in to_remind:
+            # Extract just the user id
+            remind_user_id = int(to_remind.replace('<@', '').replace('!', '').replace('>', ''))
+        elif '<#' in to_remind:
+            # Extract just the channel id
+            remind_channel_id = int(to_remind.replace('<#', '').replace('!', '').replace('>', ''))
+        else:  # User/channel was never set; invalid request
+            msg = 'Invalid <user/channel>\n' + usage
+            return await message.channel.send(msg)
         # Parse out number integer
         try:
             remind_offset = int(params[1])
@@ -144,8 +151,8 @@ class Reminder(object):
         # Get the raw message after params
         raw_message = message.content[message.content.find(params[2]) + len(params[2]) :]
         with lock:
-            heapq.heappush(self.jobs, RemindEvent(remind_user.id, remind_time, raw_message))
-        await message.channel.send("ok")
+            heapq.heappush(self.jobs, RemindEvent(remind_user_id, remind_time, raw_message, remind_channel_id))
+        await message.channel.send('ok')
 
     def thread_loop(self) -> None:
         """
@@ -159,15 +166,25 @@ class Reminder(object):
                 while self.jobs and self.jobs[0].time < time.time():
                     with lock:
                         current = heapq.heappop(self.jobs)
-                    user = None
+                    # For backwards compatibility and reminders that don't have a channel id
+                    if not hasattr(current, 'channel_id'):
+                        current.channel_id = 0
+                    messageable = None
                     try:
-                        user = asyncio.run_coroutine_threadsafe(self.client.fetch_user(current.user_id), self.event_loop).result()
+                        if current.channel_id:
+                            messageable = asyncio.run_coroutine_threadsafe(self.client.fetch_channel(current.channel_id), self.event_loop).result()
+                        else:
+                            messageable = asyncio.run_coroutine_threadsafe(self.client.fetch_user(current.user_id), self.event_loop).result()
                     except discord.NotFound:
-                        print('[REMINDER] WARNING: Couldn\'t locate user with id {} for reminder. Ignoring this reminder (message was:{})'.format(current.user_id, current.message))
+                        print('[REMINDER] WARNING: Couldn\'t locate {} with id {} for reminder. Ignoring this reminder (message was:{})'.format(
+                            'channel' if current.channel_id else 'user',
+                            current.channel_id if current.channel_id else current.user_id,
+                            current.message
+                        ))
                         continue
-                    print("Sending reminder to {}".format(user.display_name))
+                    print('Sending reminder to {}'.format(friendly_name_of_messageable(messageable)))
                     # Fire off reminder message when time in the main thread
-                    asyncio.run_coroutine_threadsafe(user.send(current.message), self.event_loop)
+                    asyncio.run_coroutine_threadsafe(messageable.send(current.message), self.event_loop)
                 # Occasionally backup to disk
                 if count >= self.save_time:
                     with open(self.file, "wb") as f:
