@@ -1,13 +1,31 @@
-from typing import List, TYPE_CHECKING
+from typing import List, Optional, TYPE_CHECKING
 import math
 
 import requests
+import urllib.parse
 
+from lib.config import get_config
 from lib.utils import get_params
 
 if TYPE_CHECKING:
     from discord import Message
     from discord.channel import TextChannel
+
+
+use_account: Optional[bool] = None
+account_login: str = ""
+api_key: str = ""
+
+
+def _init_config_if_necesary() -> None:
+    global use_account
+    if use_account is None:
+        use_account = get_config("danbooru_account") == "true"
+        if use_account:
+            global account_login
+            global api_key
+            account_login = get_config("danbooru_username")
+            api_key = get_config("danbooru_api_key")
 
 
 async def handle_danr(message: "Message", trigger_type: str, trigger: str) -> None:
@@ -53,21 +71,22 @@ async def process_request(channel: "TextChannel", amount: int, params: List[str]
     Args:
         channel: Discord channel model
         amount: Integer amount of images to request
-        params: List of tags (Note: danbooru has max limit of up to 2)
+        params: List of tags (Note: danbooru has max limit of 1 with random for anonymous/free accounts)
     """
+    _init_config_if_necesary()
     warning = ""
     if amount > 200:
         warning = ":warning:Note: Danbooru doesn't allow requests over 200 in size. This request will be limited"
-    if len(params) > 2:
-        warning = ":warning:Note: Danbooru doesn't allow searching on more than 2 tags at once. Search will be limited to your first 2 tag"
-        params = params[:2]
+    if not use_account and len(params) > 1:
+        warning = ":warning:Note: Danbooru doesn't allow searching on more than 1 random tag at once. Search will be limited to your first tag"
+        params = params[:1]
     if warning:
         await channel.send(warning)
     print("[BOORU_CLIENT] Request for {} images with tags: {}".format(amount, params))
     try:
         result = get_danbooru(amount, params)
-    except Exception:
-        print("[BOORU_CLIENT] Request threw an exception")
+    except Exception as e:
+        print("[BOORU_CLIENT] Request threw an exception:", e)
         await channel.send("Error while getting content. Maybe the booru api is down or malfunctioning?")
         return
     if not result:
@@ -93,14 +112,26 @@ def get_danbooru(amount: int, tags: List[str]) -> List[str]:
 
     Args:
         amount: Integer amount of images to request
-        tags: list of tags (Note: danbooru has max limit of up to 2)
+        tags: List of tags (Note: danbooru has max limit of 1 with random for anonymous/free accounts)
     Returns:
         List of image URLs matching search with length <= amount. Empty if no results
     """
     offset = max([3, math.ceil(amount * 0.25)])
     # Request more than we need because sometimes danbooru will return bad results amidst good ones
-    r = requests.get("https://danbooru.donmai.us/posts.json?tags={}&random=true&limit={}".format("+".join(tags), amount + offset))
+    limit = amount + offset
+    req_tags = tags.copy()
+    req_tags.append("random:{}".format(limit))
+    params = {
+        "limit": limit,
+        "tags": "+".join(req_tags),
+    }
+    if use_account:
+        params["login"] = account_login
+        params["api_key"] = api_key
+    r = requests.get("https://danbooru.donmai.us/posts.json", params=urllib.parse.urlencode(params, safe=":+"))
     response = r.json()
+    if type(response) is dict:
+        raise RuntimeError("[BOORU_CLIENT] Unexpected failure with message: {}".format(response.get("message")))
     if len(response) == 0:
         print("[BOORU_CLIENT] Request had no results")
         return []
