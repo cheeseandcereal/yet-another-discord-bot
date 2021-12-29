@@ -1,8 +1,8 @@
 from typing import List, Optional, TYPE_CHECKING
 import math
+import urllib.parse
 
 import requests
-import urllib.parse
 
 from lib.config import get_config
 from lib.utils import get_params

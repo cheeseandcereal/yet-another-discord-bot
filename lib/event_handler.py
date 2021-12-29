@@ -96,7 +96,7 @@ class EventHandler(object):
         # Don't let the bot trigger itself
         if message.author != self.client.user:
             author = message.author.__str__()
-            first_word = ''
+            first_word = ""
             message_parts = message.content.split()
             if message_parts:
                 first_word = message_parts[0].lower()

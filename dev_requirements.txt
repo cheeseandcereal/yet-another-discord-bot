@@ -6,6 +6,7 @@ flake8-assertive
 flake8-builtins
 flake8-import-order
 flake8-mypy
+types-requests
 mypy
 coverage
 black

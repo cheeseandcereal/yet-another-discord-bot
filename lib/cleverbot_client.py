@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 
 
 class Cleverbot(object):
-    """ Client for handling cleverbot.com interactions """
+    """Client for handling cleverbot.com interactions"""
 
     def __init__(self, apikey: str):
         """

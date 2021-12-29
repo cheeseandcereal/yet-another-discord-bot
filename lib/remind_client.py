@@ -10,6 +10,7 @@ if TYPE_CHECKING:
     from discord import Message, Client
 
 import discord
+
 from lib.utils import get_params, friendly_name_of_messageable
 from lib.config import get_config
 
@@ -37,7 +38,8 @@ lock = threading.Lock()
 
 
 class RemindEvent(object):
-    """ Data related to a reminder event """
+    """Data related to a reminder event"""
+
     def __init__(self, user_id: int, time: float, message: str, channel_id: int = 0):
         """
         Constructor for the reminder event
@@ -59,7 +61,7 @@ class RemindEvent(object):
 
 
 class Reminder(object):
-    """ Reminder client for the bot """
+    """Reminder client for the bot"""
 
     def __init__(self, client: "Client"):
         """
@@ -119,20 +121,20 @@ class Reminder(object):
         remind_user_id = 0
         remind_channel_id = 0
         # For 'me', set remind id of the message author
-        if to_remind.lower() == 'me':
+        if to_remind.lower() == "me":
             remind_user_id = message.author.id
         # For 'here', set remind id as channel of the message
-        elif to_remind.lower() == 'here':
+        elif to_remind.lower() == "here":
             remind_channel_id = message.channel.id
         # For a mention, get the user/channel id
-        elif '<@' in to_remind:
+        elif "<@" in to_remind:
             # Extract just the user id
-            remind_user_id = int(to_remind.replace('<@', '').replace('!', '').replace('>', ''))
-        elif '<#' in to_remind:
+            remind_user_id = int(to_remind.replace("<@", "").replace("!", "").replace(">", ""))
+        elif "<#" in to_remind:
             # Extract just the channel id
-            remind_channel_id = int(to_remind.replace('<#', '').replace('!', '').replace('>', ''))
+            remind_channel_id = int(to_remind.replace("<#", "").replace("!", "").replace(">", ""))
         else:  # User/channel was never set; invalid request
-            msg = 'Invalid <user/channel>\n' + usage
+            msg = "Invalid <user/channel>\n" + usage
             return await message.channel.send(msg)
         # Parse out number integer
         try:
@@ -152,7 +154,7 @@ class Reminder(object):
         raw_message = message.content[message.content.find(params[2]) + len(params[2]) :]
         with lock:
             heapq.heappush(self.jobs, RemindEvent(remind_user_id, remind_time, raw_message, remind_channel_id))
-        await message.channel.send('ok')
+        await message.channel.send("ok")
 
     def thread_loop(self) -> None:
         """
@@ -167,7 +169,7 @@ class Reminder(object):
                     with lock:
                         current = heapq.heappop(self.jobs)
                     # For backwards compatibility and reminders that don't have a channel id
-                    if not hasattr(current, 'channel_id'):
+                    if not hasattr(current, "channel_id"):
                         current.channel_id = 0
                     messageable = None
                     try:
@@ -176,13 +178,15 @@ class Reminder(object):
                         else:
                             messageable = asyncio.run_coroutine_threadsafe(self.client.fetch_user(current.user_id), self.event_loop).result()
                     except discord.NotFound:
-                        print('[REMINDER] WARNING: Couldn\'t locate {} with id {} for reminder. Ignoring this reminder (message was:{})'.format(
-                            'channel' if current.channel_id else 'user',
-                            current.channel_id if current.channel_id else current.user_id,
-                            current.message
-                        ))
+                        print(
+                            "[REMINDER] WARNING: Couldn't locate {} with id {} for reminder. Ignoring this reminder (message was:{})".format(
+                                "channel" if current.channel_id else "user",
+                                current.channel_id if current.channel_id else current.user_id,
+                                current.message,
+                            )
+                        )
                         continue
-                    print('Sending reminder to {}'.format(friendly_name_of_messageable(messageable)))
+                    print("Sending reminder to {}".format(friendly_name_of_messageable(messageable)))
                     # Fire off reminder message when time in the main thread
                     asyncio.run_coroutine_threadsafe(messageable.send(current.message), self.event_loop)
                 # Occasionally backup to disk
@@ -191,4 +195,4 @@ class Reminder(object):
                         pickle.dump(self.jobs, f)
                     count = 0
             except Exception as e:
-                print('Exception in Reminder thread loop: {}'.format(e))
+                print("Exception in Reminder thread loop: {}".format(e))
