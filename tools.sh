@@ -1,9 +1,9 @@
 #!/bin/sh
 set -e
 
-# Check and try to use python3.8 explicitly, if possible
-if command -v python3.8 > /dev/null 2>&1; then
-    py_exec=python3.8
+# Check and try to use python3.11 explicitly, if possible
+if command -v python3.11 > /dev/null 2>&1; then
+    py_exec=python3.11
 else
     py_exec=python3
 fi
@@ -38,9 +38,9 @@ elif [ "$1" = "tests" ]; then
     sh tools.sh coverage
 elif [ "$1" = "lint" ]; then
     find . -path "*.py" -not -path "*.git*" -not -path "*.mypy_cache*" -not -path "*.venv/*" -exec $py_exec -m flake8 {} +
-    $py_exec -m black --check -l 150 -t py38 bot.py lib/
+    $py_exec -m black --check -l 150 -t py311 bot.py lib/
 elif [ "$1" = "format" ]; then
-    $py_exec -m black -l 150 -t py38 bot.py lib/
+    $py_exec -m black -l 150 -t py311 bot.py lib/
 elif [ "$1" = "clean" ]; then
     find . \( -path ./.venv -o -path ./.mypy_cache \) -prune -o \( -name __pycache__ -o -name .build -o -name .coverage \) -exec rm -rfv {} +
 elif [ "$1" = "venv" ]; then

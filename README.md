@@ -4,7 +4,7 @@ Yet another dumb discord bot
 
 ## Install/Dependencies
 
-Because the [discord.py](https://github.com/Rapptz/discord.py) dependency is used, only python 3.6+ is supported
+Because the [discord.py](https://github.com/Rapptz/discord.py) dependency is used, only python 3.8+ is supported
 
 Clone the repo to get the code
 

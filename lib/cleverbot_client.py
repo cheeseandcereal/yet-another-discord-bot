@@ -32,7 +32,7 @@ class Cleverbot(object):
             trigger_type: the trigger type that called this function ('author', 'first_word', or 'contains')
             trigger: the relevant string from the message that triggered this call
         """
-        await message.channel.trigger_typing()
+        await message.channel.typing()
         await self.process_request(message)
 
     async def process_request(self, message: "Message") -> None:
@@ -42,7 +42,7 @@ class Cleverbot(object):
         Args:
             message: Discord message object related of this request
         """
-        params = {"input": message.content[message.content.find(" ") + 1 :], "key": self.apikey}
+        params: dict[str, Any] = {"input": message.content[message.content.find(" ") + 1 :], "key": self.apikey}
         convo = self.conversations.get(message.channel.id)
         if not convo or convo.get("timestamp", 0) > time.time() + 180:  # wait 3 minutes before resetting the conversation
             print("[CLEVER_BOT] Starting new conversation")

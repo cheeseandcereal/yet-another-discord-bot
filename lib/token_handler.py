@@ -36,5 +36,5 @@ async def validate_token(token: str) -> None:
     Args:
         token: discord authentication token for loggin in
     """
-    client = discord.Client()
+    client = discord.Client(intents=discord.Intents.default())
     await client.login(token)

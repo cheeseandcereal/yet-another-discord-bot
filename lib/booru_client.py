@@ -9,7 +9,7 @@ from lib.utils import get_params
 
 if TYPE_CHECKING:
     from discord import Message
-    from discord.channel import TextChannel
+    from discord.abc import MessageableChannel
 
 
 use_account: Optional[bool] = None
@@ -37,7 +37,7 @@ async def handle_danr(message: "Message", trigger_type: str, trigger: str) -> No
         trigger_type: the trigger type that called this function ('author', 'first_word', or 'contains')
         trigger: the relevant string from the message that triggered this call
     """
-    await message.channel.trigger_typing()
+    await message.channel.typing()
     await process_request(message.channel, 1, get_params(message))
 
 
@@ -60,11 +60,11 @@ async def handle_spam(message: "Message", trigger_type: str, trigger: str) -> No
         await message.channel.send("Usage: `spam <amount> <optional space seperated tags>`")
         return
     params = params[1:]
-    await message.channel.trigger_typing()
+    await message.channel.typing()
     await process_request(message.channel, amount, params)
 
 
-async def process_request(channel: "TextChannel", amount: int, params: List[str]) -> None:
+async def process_request(channel: "MessageableChannel", amount: int, params: List[str]) -> None:
     """
     Process a request to the booru client
 

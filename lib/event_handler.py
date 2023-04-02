@@ -21,9 +21,10 @@ class EventHandler(object):
         Raises:
             RuntimeError when passed discord client is not ready
         """
-        if not client.is_ready():
+        if not client.is_ready() or not client.user:
             raise RuntimeError("Discord client passed into EventHandler was not ready for use")
         self.client = client
+        self.user = client.user
         # Make sure each of the entries in these arrays have an entry in the function_map dictionary for their relevant functions
         self.msg_author_triggers: List[str] = []
         self.msg_contains_triggers: List[str] = []
@@ -48,8 +49,8 @@ class EventHandler(object):
         try:
             if get_config("cleverbot_integration") == "true":
                 self.clever = Cleverbot(get_config("cleverbot_api_key"))
-                self_mention_1 = "<@!{}>".format(self.client.user.id)
-                self_mention_2 = "<@{}>".format(self.client.user.id)
+                self_mention_1 = "<@!{}>".format(self.user.id)
+                self_mention_2 = "<@{}>".format(self.user.id)
                 self.msg_first_word_triggers.append(self_mention_1)
                 self.msg_first_word_triggers.append(self_mention_2)
                 self.function_map[self_mention_1] = self.clever.handle_cleverbot
@@ -96,7 +97,7 @@ class EventHandler(object):
             message: Discord message object for this event
         """
         # Don't let the bot trigger itself
-        if message.author != self.client.user:
+        if message.author != self.user:
             author = message.author.__str__()
             first_word = ""
             message_parts = message.content.split()

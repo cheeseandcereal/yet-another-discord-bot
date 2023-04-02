@@ -28,8 +28,8 @@ def print_usage() -> None:
 
 if __name__ == "__main__":
     # Check if valid python version
-    if not (sys.version_info.major == 3 and sys.version_info.minor >= 6):
-        print("Sorry, this bot only works with python 3.6+")
+    if not (sys.version_info.major == 3 and sys.version_info.minor >= 8):
+        print("Sorry, this bot only works with python 3.8+")
         sys.exit(1)
 
     # Load config/settings
@@ -64,25 +64,31 @@ if __name__ == "__main__":
         print_usage()
         sys.exit(1)
 
-    client = discord.Client()
+    intents = discord.Intents.none()
+    intents.guilds = True
+    intents.messages = True
+    intents.reactions = True
+    intents.message_content = True
+    client = discord.Client(intents=intents)
     handler = EventHandler()
 
-    @client.event  # type: ignore
+    @client.event
     async def on_ready() -> None:
         handler.initialize(client)
         await client.change_presence(activity=discord.Game("Bepis"))
-        print("Logged in as {}".format(client.user.name))
-        print("Invite Link: https://discordapp.com/oauth2/authorize?client_id={}&scope=bot&permissions=2048".format(client.user.id))
-        print("------")
+        if client.user:
+            print("Logged in as {}".format(client.user.name))
+            print("Invite Link: https://discordapp.com/oauth2/authorize?client_id={}&scope=bot&permissions=2048".format(client.user.id))
+            print("------")
 
-    @client.event  # type: ignore
+    @client.event
     async def on_message(message: discord.Message) -> None:
         if random_reactions and message.author != client.user:
             if random.random() > reaction_frequency:
                 await add_random_reaction(message)
         await handler.handle_message(message)
 
-    @client.event  # type: ignore
+    @client.event
     async def on_reaction_add(reaction: discord.Reaction, user: discord.User) -> None:
         await handler.handle_reaction_add(reaction, user)
 

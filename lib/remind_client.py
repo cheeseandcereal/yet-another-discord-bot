@@ -8,6 +8,7 @@ import heapq
 
 if TYPE_CHECKING:
     from discord import Message, Client
+    from discord.abc import Messageable
 
 import discord
 
@@ -171,10 +172,11 @@ class Reminder(object):
                     # For backwards compatibility and reminders that don't have a channel id
                     if not hasattr(current, "channel_id"):
                         current.channel_id = 0
-                    messageable = None
+                    messageable: "Messageable" = None  # type: ignore
                     try:
                         if current.channel_id:
-                            messageable = asyncio.run_coroutine_threadsafe(self.client.fetch_channel(current.channel_id), self.event_loop).result()
+                            # We are sure this channel is messageable because it's the same channel ID where we originally received a remind message; coerce type
+                            messageable = asyncio.run_coroutine_threadsafe(self.client.fetch_channel(current.channel_id), self.event_loop).result()  # type: ignore
                         else:
                             messageable = asyncio.run_coroutine_threadsafe(self.client.fetch_user(current.user_id), self.event_loop).result()
                     except discord.NotFound:

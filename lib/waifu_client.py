@@ -7,7 +7,7 @@ import requests
 
 if TYPE_CHECKING:
     from discord import Message
-    from discord.channel import TextChannel
+    from discord.abc import MessageableChannel
 
 error_message = "There was an error fetching a waifu! Sorry!"
 
@@ -21,11 +21,11 @@ async def handle_waifu(message: "Message", trigger_type: str, trigger: str) -> N
         trigger_type: the trigger type that called this function ('author', 'first_word', or 'contains')
         trigger: the relevant string from the message that triggered this call
     """
-    await message.channel.trigger_typing()
+    await message.channel.typing()
     await process_request(message.channel, trigger)
 
 
-async def process_request(channel: "TextChannel", trigger: str) -> None:
+async def process_request(channel: "MessageableChannel", trigger: str) -> None:
     """
     Process a request to deal with the waifu request
 
