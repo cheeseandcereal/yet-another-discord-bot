@@ -1,3 +1,5 @@
+# WARNING: This integration currently does not work due to anti-bot scraping protections by mywaifulist
+# It would be possible to fix this integration with paid API access/integration in the future
 from typing import TYPE_CHECKING
 
 from bs4 import BeautifulSoup

@@ -27,9 +27,11 @@ class EventHandler(object):
         # Make sure each of the entries in these arrays have an entry in the function_map dictionary for their relevant functions
         self.msg_author_triggers: List[str] = []
         self.msg_contains_triggers: List[str] = []
-        self.msg_first_word_triggers = ["danr", "spam", "choose", "waifu", "imouto", "oneechan", "oneesan"]
+        self.msg_first_word_triggers = ["danr", "spam", "choose"]
         if get_config("linux_nag") == "true":
             self.msg_contains_triggers.append("linux")
+        if get_config("waifulist_integration") == "true":
+            self.msg_first_word_triggers.extend(["waifu", "imouto", "oneechan", "oneesan"])
 
         # Functions which handle messages taking in the params (client, message)
         self.function_map = {
