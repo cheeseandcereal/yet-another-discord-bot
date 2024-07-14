@@ -1,7 +1,7 @@
 import configparser
 
 config = configparser.ConfigParser()
-config.readfp(open("config/config.ini"))
+config.read_file(open("config/config.ini"))
 
 
 def get_config(key: str, section: str = "settings") -> str:

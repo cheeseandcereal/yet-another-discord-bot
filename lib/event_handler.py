@@ -1,4 +1,4 @@
-from typing import List, TYPE_CHECKING
+from typing import Set, TYPE_CHECKING
 
 from lib.config import get_config
 from lib.booru_client import handle_danr, handle_spam
@@ -26,13 +26,13 @@ class EventHandler(object):
         self.client = client
         self.user = client.user
         # Make sure each of the entries in these arrays have an entry in the function_map dictionary for their relevant functions
-        self.msg_author_triggers: List[str] = []
-        self.msg_contains_triggers: List[str] = []
-        self.msg_first_word_triggers = ["danr", "spam", "choose"]
+        self.msg_author_triggers: Set[str] = set()
+        self.msg_contains_triggers: Set[str] = set()
+        self.msg_first_word_triggers = {"danr", "spam", "choose"}
         if get_config("linux_nag") == "true":
-            self.msg_contains_triggers.append("linux")
+            self.msg_contains_triggers.add("linux")
         if get_config("waifulist_integration") == "true":
-            self.msg_first_word_triggers.extend(["waifu", "imouto", "oneechan", "oneesan"])
+            self.msg_first_word_triggers.update(["waifu", "imouto", "oneechan", "oneesan"])
 
         # Functions which handle messages taking in the params (client, message)
         self.function_map = {
@@ -51,8 +51,8 @@ class EventHandler(object):
                 self.clever = Cleverbot(get_config("cleverbot_api_key"))
                 self_mention_1 = "<@!{}>".format(self.user.id)
                 self_mention_2 = "<@{}>".format(self.user.id)
-                self.msg_first_word_triggers.append(self_mention_1)
-                self.msg_first_word_triggers.append(self_mention_2)
+                self.msg_first_word_triggers.add(self_mention_1)
+                self.msg_first_word_triggers.add(self_mention_2)
                 self.function_map[self_mention_1] = self.clever.handle_cleverbot
                 self.function_map[self_mention_2] = self.clever.handle_cleverbot
         except Exception:
@@ -61,7 +61,7 @@ class EventHandler(object):
         try:
             if get_config("remind_enabled") == "true":
                 self.remind = Reminder(self.client)
-                self.msg_first_word_triggers.append("remind")
+                self.msg_first_word_triggers.add("remind")
                 self.function_map["remind"] = self.remind.handle_remind
         except Exception:
             print("WARNING: Error processing reminder integration")
@@ -70,13 +70,13 @@ class EventHandler(object):
         self.add_triggers("contains_triggers", self.msg_contains_triggers)
         self.add_triggers("first_word_triggers", self.msg_first_word_triggers)
 
-    def add_triggers(self, config_entry: str, trigger_array: List[str]) -> None:
+    def add_triggers(self, config_entry: str, trigger_set: Set[str]) -> None:
         """
         Read bot triggers from a settings configuration entry and make them active for the bot
 
         Args:
             config_entry: settings config key of the entries to read
-            trigger_array: list to add the parsed triggers into
+            trigger_set: set to add the parsed triggers into
         """
         for item in get_config(config_entry).split(","):
             try:
@@ -85,7 +85,7 @@ class EventHandler(object):
                     self.function_map[item] = lib.misc_functions.send_simple_message
                 else:
                     raise RuntimeError("Response type {} not supported".format(response_type))
-                trigger_array.append(item)
+                trigger_set.add(item)
             except Exception:
                 print("WARNING: Error adding trigger for {}".format(item))
 
