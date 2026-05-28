@@ -1,19 +1,19 @@
-from typing import Any, TYPE_CHECKING
-import time
-import os
-import threading
-import pickle
 import asyncio
 import heapq
+import os
+import pickle
+import threading
+import time
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from discord import Message, Client
+    from discord import Client, Message
     from discord.abc import Messageable
 
 import discord
 
-from lib.utils import get_params, friendly_name_of_messageable
 from lib.config import get_config
+from lib.utils import friendly_name_of_messageable, get_params
 
 usage = """```Usage: remind <user/channel> <number> <time_unit> <message>
 

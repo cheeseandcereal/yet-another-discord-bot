@@ -1,5 +1,5 @@
-from typing import TYPE_CHECKING
 import random
+from typing import TYPE_CHECKING
 
 from lib.config import get_config
 from lib.utils import get_params

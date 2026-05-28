@@ -1,6 +1,6 @@
-from typing import Dict, Any, TYPE_CHECKING
-import time
 import random
+import time
+from typing import TYPE_CHECKING, Any, Dict
 
 import requests
 

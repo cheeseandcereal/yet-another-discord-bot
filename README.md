@@ -4,11 +4,18 @@ Yet another dumb discord bot
 
 ## Install/Dependencies
 
-Because the [discord.py](https://github.com/Rapptz/discord.py) dependency is used, only python 3.8+ is supported
+Requires Python 3.14+.
 
-Clone the repo to get the code
+Clone the repo to get the code.
 
-Inside the downloaded repository folder, install the pip requirements:
+This project uses [uv](https://docs.astral.sh/uv/) for dependency
+management. With uv installed, sync the environment:
+
+    uv sync --no-dev          # runtime dependencies only
+    uv sync                   # also install dev tools (ruff, mypy, coverage)
+
+Without uv, `requirements.txt` is kept in sync with the lockfile and can
+be installed with pip:
 
     python3 -m pip install -r requirements.txt --user
 
@@ -16,16 +23,31 @@ Inside the downloaded repository folder, install the pip requirements:
 
 To run with a one-time use token:
 
-`python3 bot.py -t <token>`
+`uv run python bot.py -t <token>`
 
 To save your token to the config file:
 
-`python3 bot.py -s <token>`
+`uv run python bot.py -s <token>`
 
 To run the bot with the saved token from the config file:
 
-`python3 bot.py`
+`uv run python bot.py` (or `make run`)
 
 Display Help:
 
-`python3 bot.py --help`
+`uv run python bot.py --help`
+
+## Development
+
+Common tasks are exposed via the `Makefile`:
+
+    make lint          # ruff check + format check + mypy
+    make format        # auto-fix lint issues and reformat
+    make tests         # unit tests + coverage report
+    make full-test     # check-requirements + lint + tests
+    make lock          # refresh uv.lock and regenerate requirements.txt
+    make clean         # remove caches and coverage artifacts
+
+After changing dependencies in `pyproject.toml`, run `make lock` to
+update both `uv.lock` and `requirements.txt`. The `check-requirements`
+target (run as part of `full-test`) verifies they stay in sync.

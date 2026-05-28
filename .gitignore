@@ -15,3 +15,5 @@ testing.py
 reminders.bin
 .venv
 .coverage
+.mypy_cache
+.ruff_cache

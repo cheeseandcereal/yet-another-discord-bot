@@ -1,6 +1,6 @@
-from typing import List, Optional, TYPE_CHECKING
 import math
 import urllib.parse
+from typing import TYPE_CHECKING, List, Optional
 
 import requests
 

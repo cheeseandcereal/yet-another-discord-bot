@@ -2,8 +2,8 @@
 # It would be possible to fix this integration with paid API access/integration in the future
 from typing import TYPE_CHECKING
 
-from bs4 import BeautifulSoup
 import requests
+from bs4 import BeautifulSoup
 
 if TYPE_CHECKING:
     from discord import Message
@@ -45,7 +45,12 @@ async def process_request(channel: "MessageableChannel", trigger: str) -> None:
         try:
             # Parse html for the waifu id
             page = BeautifulSoup(r.text, "html.parser")
-            waifu_id = page.find("waifu-core").get(":waifu-id")
+            waifu_core = page.find("waifu-core")
+            if waifu_core is None:
+                await channel.send(error_message)
+                print("Warning: could not locate waifu-core element in mywaifulist response")
+                return
+            waifu_id = waifu_core.get(":waifu-id")
             # Now query the api for the waifu information
             r = requests.get("https://mywaifulist.moe/api/waifu/{}".format(waifu_id), headers={"X-Requested-With": "XMLHttpRequest"})
             if r.status_code < 200 or r.status_code >= 300:

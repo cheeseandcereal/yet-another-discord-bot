@@ -1,14 +1,14 @@
-from typing import Set, TYPE_CHECKING
+from typing import TYPE_CHECKING, Set
 
-from lib.config import get_config
-from lib.booru_client import handle_danr, handle_spam
-from lib.waifu_client import handle_waifu
-from lib.cleverbot_client import Cleverbot
-from lib.remind_client import Reminder
 import lib.misc_functions
+from lib.booru_client import handle_danr, handle_spam
+from lib.cleverbot_client import Cleverbot
+from lib.config import get_config
+from lib.remind_client import Reminder
+from lib.waifu_client import handle_waifu
 
 if TYPE_CHECKING:
-    from discord import Message, Client, User, Reaction
+    from discord import Client, Message, Reaction, User
 
 
 class EventHandler(object):
