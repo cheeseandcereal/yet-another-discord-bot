@@ -128,7 +128,13 @@ def get_danbooru(amount: int, tags: List[str]) -> List[str]:
     if use_account:
         params["login"] = account_login
         params["api_key"] = api_key
-    r = requests.get("https://danbooru.donmai.us/posts.json", params=urllib.parse.urlencode(params, safe=":+"))
+    r = requests.get(
+        "https://danbooru.donmai.us/posts.json",
+        params=urllib.parse.urlencode(params, safe=":+"),
+        headers={"User-Agent": "yet-another-discord-bot"},
+    )
+    if not r.ok:
+        raise RuntimeError("[BOORU_CLIENT] HTTP {}: {}".format(r.status_code, r.text[:200]))
     response = r.json()
     if type(response) is dict:
         raise RuntimeError("[BOORU_CLIENT] Unexpected failure with message: {}".format(response.get("message")))
